@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "neverUnload": false,
+  "priority": 3,
+  "plugin_name": "music",
+  "plugin_description": "Music-related stuff."
+}
