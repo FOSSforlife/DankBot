@@ -5,7 +5,13 @@ const radioServer = {
   voiceChannel: 'EJ the DJ 📻',
   jsonUrl: 'http://stream.eliasjackson.com/status-json.xsl',
   streamUrl: 'http://stream.eliasjackson.com/music1.ogg'
-}
+};
+
+// can safely be commented out
+const msgToUpdate = {
+  id: process.env.RADIO_MSG_ID, 
+  channelId: process.env.RADIO_MSG_CHANNELID
+} 
 
 exports.run = async(bot, message, args, level) => {
   request(radioServer.jsonUrl, (error, response, body) => {
@@ -25,10 +31,16 @@ exports.run = async(bot, message, args, level) => {
     embed.setTitle(`Now playing in ${radioServer.voiceChannel}`);
     embed.setDescription(`${server.artist} - ${server.title}`);
     embed.setFooter(`${message.botDisplayName} v${bot.version}`);
-    embed.setTimestamp();
+    // embed.setTimestamp();
     message.channel.send({
         embed: embed
     });
+
+    if(msgToUpdate) {
+      let channel = bot.channels.find(c => c.id == msgToUpdate.channelId);
+      channel.fetchMessage(msgToUpdate.id)
+      .then(msg => msg.edit('', {embed: embed}));
+    }
   });
 }
 
