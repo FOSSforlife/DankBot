@@ -30,28 +30,47 @@ const getNowPlayingEmbed = async (bot) => {
   let embed = new Discord.RichEmbed();
   embed.setColor(bot.embedColor.info);
   embed.setTitle(`Now playing in ${radioServer.voiceChannel}`);
-  embed.setDescription(`${server.artist} - ${server.title}`);
+  embed.setDescription(npString);
   // embed.setFooter(`${bot.config.DisplaName} v${bot.version}`);
   // embed.setTimestamp();
 
-  return embed;
+  return [embed, npString];
 }
 
 exports.run = async(bot, message, args, level) => {
+  [embed, currentNowPlaying] = await getNowPlayingEmbed(bot);
   message.channel.send({
-      embed: await getNowPlayingEmbed(bot)
+      embed: embed
   });
 
+  if(updateNowPlaying) {
+    if(currentNowPlaying !== bot.currentNowPlaying) {
+      bot.currentNowPlaying = currentNowPlaying;
+      let channel = bot.channels.find(c => c.id == nowPlayingMsg.channelId);
+      channel.fetchMessage(nowPlayingMsg.id)
+      .then(msg => msg.edit('', {embed: embed}));
+    }
+
+    if(!bot.updateNowPlayingCronJob) {
+      bot.updateNowPlayingCronJob = new cronJob("*/1 * * * *", () => {
+        getNowPlayingEmbed(bot)
+        .then(([embed, currentNowPlaying]) => {
+          if(currentNowPlaying !== bot.currentNowPlaying) {
+            bot.currentNowPlaying = currentNowPlaying;
+            let channel = bot.channels.find(c => c.id == nowPlayingMsg.channelId);
+            channel.fetchMessage(nowPlayingMsg.id)
+            .then(msg => msg.edit('', {embed: embed}));
+          }
+        })
+      });
+      bot.updateNowPlayingCronJob.start();
+
+    }
+  }
+  
+
   if(updateNowPlaying && !bot.updateNowPlayingCronJob) {
-    bot.updateNowPlayingCronJob = new cronJob("*/1 * * * *", () => {
-      getNowPlayingEmbed(bot)
-      .then(embed => {
-        let channel = bot.channels.find(c => c.id == nowPlayingMsg.channelId);
-        channel.fetchMessage(nowPlayingMsg.id)
-        .then(msg => msg.edit('', {embed: embed}));
-      })
-    });
-    bot.updateNowPlayingCronJob.start();
+    
   }
   
 }
