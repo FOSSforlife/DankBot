@@ -17,6 +17,7 @@
     "dotenv": "^8.2.0",
     "googleapis": "^45.0.0",
     "nodemon": "^1.19.4",
-    "request": "^2.88.0"
+    "request": "^2.88.0",
+    "request-promise": "^4.2.5"
   }
 }

@@ -1,7 +1,7 @@
 require('dotenv').config();
 const config = {
     // Bot Name
-    botDisplaName: 'VISION',
+    botDisplaName: 'DankBot',
 
     // Default Settings
     prefix: '$',

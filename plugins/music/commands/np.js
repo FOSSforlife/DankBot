@@ -1,4 +1,4 @@
-const request = require('request');
+const request = require('request-promise');
 const Discord = require(`discord.js`);
 const cronJob = require('cron').CronJob;
 
@@ -14,38 +14,46 @@ const nowPlayingMsg = {
   channelId: process.env.RADIO_MSG_CHANNELID
 };
 
+const getNowPlayingEmbed = async (bot) => {
+  let body = await request(radioServer.jsonUrl);
+  let icestats = JSON.parse(body).icestats;
+  let server;
+  if(Array.isArray(icestats.source)) {
+    server = icestats.source.find(s => s.server_name === 'music1.ogg');
+  }
+  else {
+    server = icestats.source;
+  }
+  let npString = `${server.artist} - ${server.title}`;
+  bot.logger.debug(npString);
+
+  let embed = new Discord.RichEmbed();
+  embed.setColor(bot.embedColor.info);
+  embed.setTitle(`Now playing in ${radioServer.voiceChannel}`);
+  embed.setDescription(`${server.artist} - ${server.title}`);
+  // embed.setFooter(`${bot.config.DisplaName} v${bot.version}`);
+  // embed.setTimestamp();
+
+  return embed;
+}
+
 exports.run = async(bot, message, args, level) => {
-  request(radioServer.jsonUrl, (error, response, body) => {
-    if(error || parseInt(response.statusCode) >= 400) return message.channel.send("Error getting stream data");
+  message.channel.send({
+      embed: await getNowPlayingEmbed(bot)
+  });
 
-    let icestats = JSON.parse(body).icestats;
-    let server;
-    if(Array.isArray(icestats.source)) {
-      server = icestats.source.find(s => s.server_name === 'music1.ogg');
-    }
-    else {
-      server = icestats.source;
-    }
-
-    var embed = new Discord.RichEmbed();
-    embed.setColor(bot.embedColor.info);
-    embed.setTitle(`Now playing in ${radioServer.voiceChannel}`);
-    embed.setDescription(`${server.artist} - ${server.title}`);
-    embed.setFooter(`${message.botDisplayName} v${bot.version}`);
-    // embed.setTimestamp();
-    message.channel.send({
-        embed: embed
-    });
-
-    if(updateNowPlaying && !bot.updateNowPlayingCronJob) {
-      bot.updateNowPlayingCronJob = new cronJob("*/1 * * * *", () => {
+  if(updateNowPlaying && !bot.updateNowPlayingCronJob) {
+    bot.updateNowPlayingCronJob = new cronJob("*/1 * * * *", () => {
+      getNowPlayingEmbed(bot)
+      .then(embed => {
         let channel = bot.channels.find(c => c.id == nowPlayingMsg.channelId);
         channel.fetchMessage(nowPlayingMsg.id)
         .then(msg => msg.edit('', {embed: embed}));
-      });
-      bot.updateNowPlayingCronJob.start();
-    }
-  });
+      })
+    });
+    bot.updateNowPlayingCronJob.start();
+  }
+  
 }
 
 exports.conf = {
