@@ -1,5 +1,6 @@
 const request = require('request');
 const Discord = require(`discord.js`);
+const cronJob = require('cron').CronJob;
 
 const radioServer = {
   voiceChannel: 'EJ the DJ 📻',
@@ -7,11 +8,11 @@ const radioServer = {
   streamUrl: 'http://stream.eliasjackson.com/music1.ogg'
 };
 
-// can safely be commented out
-const msgToUpdate = {
+const updateNowPlaying = true;
+const nowPlayingMsg = {
   id: process.env.RADIO_MSG_ID, 
   channelId: process.env.RADIO_MSG_CHANNELID
-} 
+};
 
 exports.run = async(bot, message, args, level) => {
   request(radioServer.jsonUrl, (error, response, body) => {
@@ -36,10 +37,13 @@ exports.run = async(bot, message, args, level) => {
         embed: embed
     });
 
-    if(msgToUpdate) {
-      let channel = bot.channels.find(c => c.id == msgToUpdate.channelId);
-      channel.fetchMessage(msgToUpdate.id)
-      .then(msg => msg.edit('', {embed: embed}));
+    if(updateNowPlaying && !bot.updateNowPlayingCronJob) {
+      bot.updateNowPlayingCronJob = new cronJob("*/1 * * * *", () => {
+        let channel = bot.channels.find(c => c.id == nowPlayingMsg.channelId);
+        channel.fetchMessage(nowPlayingMsg.id)
+        .then(msg => msg.edit('', {embed: embed}));
+      });
+      bot.updateNowPlayingCronJob.start();
     }
   });
 }
