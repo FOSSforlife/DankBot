@@ -11,8 +11,10 @@
   "author": "Elias Jackson",
   "license": "ISC",
   "dependencies": {
+    "Vision-Reloaded": "file:../Vision-Reloaded",
+    "discord.js": "^11.5.1",
     "dotenv": "^8.2.0",
     "googleapis": "^45.0.0",
-    "Vision-Reloaded": "file:../Vision-Reloaded"
+    "request": "^2.88.0"
   }
 }
