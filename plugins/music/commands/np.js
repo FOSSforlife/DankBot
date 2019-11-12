@@ -25,7 +25,7 @@ const getNowPlayingEmbed = async (bot) => {
     server = icestats.source;
   }
   let npString = `${server.artist} - ${server.title}`;
-  bot.logger.debug(npString);
+  // bot.logger.debug(npString);
 
   let embed = new Discord.RichEmbed();
   embed.setColor(bot.embedColor.info);
